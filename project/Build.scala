@@ -9,6 +9,7 @@ object ApplicationBuild extends Build {
 
   val appDependencies = Seq(
     javaCore,
+    cache,
     "be.objectify" %% "deadbolt-core" % "2.2.1-tomondev"
   )
 
