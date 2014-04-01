@@ -16,10 +16,12 @@
 package be.objectify.deadbolt.java.actions;
 
 import be.objectify.deadbolt.java.DeadboltHandler;
+import be.objectify.deadbolt.java.utils.PluginUtils;
 import play.libs.F;
 import play.mvc.Http;
-import play.mvc.Result;
 import play.mvc.SimpleResult;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Convenience class for checking if an qction has already been authorised before applying the restrictions.
@@ -38,10 +40,14 @@ public abstract class AbstractRestrictiveAction<T> extends AbstractDeadboltActio
         }
         else
         {
-            DeadboltHandler deadboltHandler = getDeadboltHandler(getDeadboltHandlerClass());
+            DeadboltHandler deadboltHandler = getDeadboltHandler(getHandlerKey(),
+                                                                 getDeadboltHandlerClass());
             result = deadboltHandler.beforeAuthCheck(ctx);
 
-            if (result == null)
+            SimpleResult futureResult = result == null ? null
+                                                       : result.get(PluginUtils.getBeforeAuthCheckTimeout(),
+                                                                    TimeUnit.MILLISECONDS);
+            if (futureResult == null)
             {
                 result = applyRestriction(ctx,
                                           deadboltHandler);
@@ -50,6 +56,19 @@ public abstract class AbstractRestrictiveAction<T> extends AbstractDeadboltActio
         return result;
     }
 
+    /**
+     * Get the key of a specific DeadboltHandler instance.
+     *
+     * @return a key.  May be null.
+     */
+    public abstract String getHandlerKey();
+
+    /**
+     * Get the class of a specific Deadbolt handler.
+     *
+     * @return the class of a DeadboltHandler implementation.  May be null.
+     * @deprecated Prefer {@link be.objectify.deadbolt.java.actions.AbstractRestrictiveAction#getHandlerKey()} instead
+     */
     public abstract Class<? extends DeadboltHandler> getDeadboltHandlerClass();
 
     public abstract F.Promise<SimpleResult> applyRestriction(Http.Context ctx,

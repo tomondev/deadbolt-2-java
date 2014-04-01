@@ -16,10 +16,13 @@
 package be.objectify.deadbolt.java.actions;
 
 import be.objectify.deadbolt.java.DeadboltHandler;
+import be.objectify.deadbolt.java.utils.PluginUtils;
 import play.libs.F;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.SimpleResult;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Invokes beforeAuthCheck on the global or a specific {@link be.objectify.deadbolt.java.DeadboltHandler}.
@@ -41,10 +44,14 @@ public class BeforeAccessAction extends AbstractDeadboltAction<BeforeAccess>
         }
         else
         {
-            DeadboltHandler deadboltHandler = getDeadboltHandler(configuration.value());
+            DeadboltHandler deadboltHandler = getDeadboltHandler(configuration.handlerKey(),
+                                                                 configuration.value());
             result = deadboltHandler.beforeAuthCheck(ctx);
 
-            if (result == null)
+            SimpleResult futureResult = result.get(PluginUtils.getBeforeAuthCheckTimeout(),
+                                                   TimeUnit.MILLISECONDS);
+
+            if (futureResult == null)
             {
                 result = delegate.call(ctx);
             }

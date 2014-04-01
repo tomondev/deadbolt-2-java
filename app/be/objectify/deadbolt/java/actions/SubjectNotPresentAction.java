@@ -17,11 +17,13 @@ package be.objectify.deadbolt.java.actions;
 
 import be.objectify.deadbolt.core.models.Subject;
 import be.objectify.deadbolt.java.DeadboltHandler;
+import be.objectify.deadbolt.java.utils.PluginUtils;
 import be.objectify.deadbolt.java.utils.RequestUtils;
 import play.libs.F;
 import play.mvc.Http;
-import play.mvc.Result;
 import play.mvc.SimpleResult;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implements the {@link SubjectNotPresent} functionality, i.e. the
@@ -38,30 +40,42 @@ public class SubjectNotPresentAction extends AbstractDeadboltAction<SubjectNotPr
     @Override
     public F.Promise<SimpleResult> execute(Http.Context ctx) throws Throwable
     {
-        F.Promise<SimpleResult> result;
+        F.Promise<SimpleResult> result = F.Promise.pure(null);
         if (isActionUnauthorised(ctx))
         {
-            result = onAuthFailure(getDeadboltHandler(configuration.handler()),
+            result = onAuthFailure(getDeadboltHandler(configuration.handlerKey(),
+                                                      configuration.handler()),
                                    configuration.content(),
                                    ctx);
         }
         else
         {
-            DeadboltHandler deadboltHandler = getDeadboltHandler(configuration.handler());
-            Subject subject = getSubject(ctx,
-                                         deadboltHandler);
-
-            if (subject == null)
+            DeadboltHandler deadboltHandler = getDeadboltHandler(configuration.handlerKey(),
+                                                                 configuration.handler());
+            if (configuration.forceBeforeAuthCheck())
             {
-                markActionAsAuthorised(ctx);
-                result = delegate.call(ctx);
+               result = deadboltHandler.beforeAuthCheck(ctx);
             }
-            else
+
+            SimpleResult futureResult = result.get(PluginUtils.getBeforeAuthCheckTimeout(),
+                                                   TimeUnit.MILLISECONDS);
+            if (futureResult == null)
             {
-                markActionAsUnauthorised(ctx);
-                result = onAuthFailure(deadboltHandler,
-                                       configuration.content(),
-                                       ctx);
+                Subject subject = getSubject(ctx,
+                                             deadboltHandler);
+
+                if (subject == null)
+                {
+                    markActionAsAuthorised(ctx);
+                    result = delegate.call(ctx);
+                }
+                else
+                {
+                    markActionAsUnauthorised(ctx);
+                    result = onAuthFailure(deadboltHandler,
+                                           configuration.content(),
+                                           ctx);
+                }
             }
         }
 

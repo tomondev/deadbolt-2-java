@@ -10,12 +10,12 @@ object ApplicationBuild extends Build {
   val appDependencies = Seq(
     javaCore,
     cache,
-    "be.objectify" %% "deadbolt-core" % "2.2.2-tomondev"
+    "be.objectify" %% "deadbolt-core" % "2.2.1-RC1"
   )
 
   val main = play.Project(appName, appVersion, appDependencies).settings(
     organization := "be.objectify",
-    resolvers += Resolver.url("Objectify Play Repository", url("http://schaloner.github.com/releases/"))(Resolver.ivyStylePatterns),
-    resolvers += Resolver.url("Objectify Play Snapshot Repository", url("http://schaloner.github.com/snapshots/"))(Resolver.ivyStylePatterns)
+    resolvers += Resolver.url("Objectify Play Repository", url("http://schaloner.github.io/releases/"))(Resolver.ivyStylePatterns),
+    resolvers += Resolver.url("Objectify Play Snapshot Repository", url("http://schaloner.github.io/snapshots/"))(Resolver.ivyStylePatterns)
   )
 }

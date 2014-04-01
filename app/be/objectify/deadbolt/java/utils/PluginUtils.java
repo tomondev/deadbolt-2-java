@@ -39,9 +39,21 @@ public class PluginUtils
         return p != null && p.isCacheUserPerRequestEnabled();
     }
 
+    public static int getBeforeAuthCheckTimeout() throws Exception
+    {
+        DeadboltPlugin p = getDeadboltPlugin();
+        return p.getBeforeAuthCheckTimeout();
+    }
+
     public static DeadboltHandler getDeadboltHandler() throws Exception
     {
         DeadboltPlugin p = getDeadboltPlugin();
         return p != null ? p.getDeadboltHandler() : null;
+    }
+
+    public static DeadboltHandler getDeadboltHandler(String handlerKey) throws Exception
+    {
+        DeadboltPlugin p = getDeadboltPlugin();
+        return p != null ? p.getDeadboltHandler(handlerKey) : null;
     }
 }
